@@ -727,7 +727,7 @@
                 }
 
                 const data = await response.json();
-                document.getElementById('textInput').value = data.data.cleaned_text || "Batch Analysis (View below)";
+                document.getElementById('textInput').value = data.data.cleaned_text || "Enter text here";
                 displayResults(data.data, data);
             } catch (error) {
                 showError('Connection error. Make sure the backend server is running.');
