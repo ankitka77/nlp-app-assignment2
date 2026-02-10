@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentiment Analysis Application</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 15px;
+            animation: slideDown 0.6s ease;
+            padding: 10px 0;
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 3px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        header p {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+            grid-auto-rows: 1fr;
+            min-height: calc(100vh - 150px);
+            align-items: stretch;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+            animation: slideUp 0.6s ease;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            height: 720px;
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 4px;
+            flex-shrink: 0;
+        }
+
+        .input-group {
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 0.9rem;
+            resize: vertical;
+            min-height: 120px;
+            max-height: 120px;
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        input[type="file"] {
+            padding: 10px;
+            border: 2px dashed #667eea;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 100px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results-section.hidden {
+            display: none;
+        }
+
+        .sentiment-display {
+            text-align: center;
+            padding: 8px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+        }
+
+        .sentiment-positive {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+            color: #155724;
+        }
+
+        .sentiment-negative {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: #721c24;
+        }
+
+        .sentiment-neutral {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            color: #856404;
+        }
+
+        .sentiment-label {
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .confidence-label {
+            font-size: 0.85rem;
+            margin-bottom: 2px;
+        }
+
+        .confidence-percent {
+            font-size: 1rem;
+            font-weight: bold;
+        }
+
+        .confidence-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 6px;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            margin: 5px 0;
+        }
+
+        .stat-box {
+            background: #f8f9fa;
+            padding: 6px;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.7rem;
+            margin-bottom: 2px;
+        }
+
+        .stat-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 180px;
+            margin: 8px 0;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .sentence-analysis {
+            margin-top: 20px;
+        }
+
+        .sentence-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .sentence-text {
+            color: #333;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .sentence-sentiment {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .sentiment-positive-small {
+            background: #84fab0;
+            color: #155724;
+        }
+
+        .sentiment-negative-small {
+            background: #fa709a;
+            color: #721c24;
+        }
+
+        .sentiment-neutral-small {
+            background: #a8edea;
+            color: #856404;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: white;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid white;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            display: none;
+            border-left: 4px solid #f5c6cb;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            display: none;
+            border-left: 4px solid #c3e6cb;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 12px;
+            border-bottom: 2px solid #ddd;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 6px 10px;
+            cursor: pointer;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            font-size: 0.75rem;
+        }
+
+        .tab-btn.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            header h1 {
+                font-size: 1.8rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .tokens-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 15px 0;
+        }
+
+        .token-badge {
+            background: #667eea;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Sentiment Analysis Application</h1>
+            <h2>NLP Application Assignment 2</h2>
+            <h3>Group #37: Ankit Kumar Agarwal (2024aa05560); Chandrababu Yelamuri (2024aa05820); Deepan KG
+                (2024aa05755); Preety Gupta (2023ac05892); Srithin Nair (2024ab05197)</h3>
+        </header>
+
+        <div class="main-grid">
+            <!-- Input Section -->
+            <div class="card">
+                <h2>Input Text</h2>
+
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('text-tab')">Direct Text</button>
+                    <button class="tab-btn" onclick="switchTab('file-tab')">Upload File</button>
+                </div>
+
+                <!-- Text Input Tab -->
+                <div id="text-tab" class="tab-content active">
+                    <div class="input-group">
+                        <label for="textInput">Enter your text below:</label>
+                        <textarea id="textInput" placeholder="Enter text to analyze sentiment..."></textarea>
+                        <small style="color: #667eea; font-weight: 600; margin-top: 5px;">Limit: 50,000
+                            characters</small>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn-primary" onclick="analyzeText()">Analyze</button>
+                        <button class="btn-secondary" onclick="clearText()">Clear</button>
+                    </div>
+                </div>
+
+                <!-- File Upload Tab -->
+                <div id="file-tab" class="tab-content">
+                    <div class="input-group">
+                        <label for="fileInput" style="color: #667eea;">Upload a text file:</label>
+                        <label style="font-weight: normal; margin-top: -5px; margin-bottom: 10px; display: block;">(each
+                            paragraph will be considered as a separate chunk to be analyzed for sentiment)</label>
+                        <input type="file" id="fileInput" accept=".txt" />
+                        <small style="color: #667eea; font-weight: 600; margin-top: 5px;">Max size: 10MB | Max
+                            characters: 50,000</small>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn-primary" onclick="analyzeFile()">Analyze File</button>
+                    </div>
+                </div>
+
+                <div class="error" id="errorMessage"></div>
+                <div class="success" id="successMessage"></div>
+                <div class="loading" id="loading">
+                    <div class="sand-timer">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M18 19V21M6 21V19M6 3V5M18 5V3M12 12L7 7V5H17V7L12 12ZM12 12L17 17V19H7V17L12 12Z"
+                                stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <p id="loadingText">Processing your file...</p>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="card results-section" id="resultsCard">
+                <div id="batchSummaryHeader"
+                    style="display: none; margin-bottom: 8px; background: rgba(2, 189, 61, 0.1); padding: 6px; border-radius: 8px;">
+                    <h3 style="color: #667eea; font-size: 0.95rem;">Batch File Analysis</h3>
+                    <p id="batchStatText" style="font-size: 0.75rem; color: #666;"></p>
+                    <div id="batchList"
+                        style="max-height: 170px; overflow-y: auto; margin-top: 5px; border-top: 1px solid #ddd; padding-top: 5px;">
+                        <!-- Paragraph items will be injected here -->
+                    </div>
+                </div>
+
+                <h2 id="resultTitle">Analysis Results</h2>
+
+                <div id="sentimentDisplay" class="sentiment-display sentiment-neutral">
+                    <div class="sentiment-label" id="sentimentLabel">NEUTRAL</div>
+                    <div class="confidence-label">Confidence Score</div>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" id="confidenceFill"></div>
+                    </div>
+                    <div class="confidence-percent" id="confidencePercent">0%</div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-label">Overall Sentiment</div>
+                        <div class="stat-value" id="overallSentiment">-</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Confidence</div>
+                        <div class="stat-value" id="confidenceScore">-</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Sentences</div>
+                        <div class="stat-value" id="sentenceCount">-</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Tokens</div>
+                        <div class="stat-value" id="tokenCount">-</div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="sentimentChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Detailed Analysis Section -->
+            <div class="card results-section" id="detailedCard">
+                <h2>Detailed Analysis</h2>
+
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchDetailTab('scores-tab')">Sentiment Scores</button>
+                    <button class="tab-btn" onclick="switchDetailTab('tokens-tab')">Processed Tokens</button>
+                    <button class="tab-btn" onclick="switchDetailTab('sentences-tab')">Sentence Analysis</button>
+                </div>
+
+                <!-- Scores Tab -->
+                <div id="scores-tab" class="tab-content active">
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-label">Positive Score</div>
+                            <div class="stat-value" id="positiveScore">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Negative Score</div>
+                            <div class="stat-value" id="negativeScore">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Neutral Score</div>
+                            <div class="stat-value" id="neutralScore">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Compound Score</div>
+                            <div class="stat-value" id="compoundScore">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Polarity</div>
+                            <div class="stat-value" id="polarity">-</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Subjectivity</div>
+                            <div class="stat-value" id="subjectivity">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tokens Tab -->
+                <div id="tokens-tab" class="tab-content">
+                    <div class="tokens-list" id="tokensList"></div>
+                </div>
+
+                <!-- Sentences Tab -->
+                <div id="sentences-tab" class="tab-content">
+                    <div class="sentence-analysis" id="sentenceAnalysis"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let chartInstance = null;
+
+        function switchTab(tabId) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                if (tab.parentElement === document.querySelector('.tabs').parentElement) {
+                    tab.classList.remove('active');
+                }
+            });
+
+            // Remove active from all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function switchDetailTab(tabId) {
+            // Hide all detail tabs
+            document.querySelectorAll('#detailedCard .tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Remove active from all detail buttons
+            document.querySelectorAll('#detailedCard .tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function showError(message) {
+            hideLoading();
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+        }
+
+        function showSuccess(message, details = null) {
+            hideLoading();
+            const successEl = document.getElementById('successMessage');
+            if (details) {
+                successEl.innerHTML = `<strong>${message}</strong><br/>
+                <div style="font-size: 0.85rem; margin-top: 5px; opacity: 0.9;">
+                    Found ${details.total} entries: 
+                    <span style="color: #155724;">${details.pos} Positive</span>, 
+                    <span style="color: #721c24;">${details.neg} Negative</span>, 
+                    <span style="color: #856404;">${details.neu} Neutral</span>
+                </div>`;
+            } else {
+                successEl.textContent = message;
+            }
+            successEl.style.display = 'block';
+        }
+
+        async function analyzeText() {
+            const text = document.getElementById('textInput').value.trim();
+
+            if (!text) {
+                showError('Please enter some text to analyze');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/api/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text: text })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    showError(error.error || 'Error analyzing text');
+                    return;
+                }
+
+                const data = await response.json();
+                displayResults(data.data, data);
+            } catch (error) {
+                showError('Connection error. Make sure the backend server is running on http://127.0.0.1:5000');
+                console.error('Error:', error);
+            }
+        }
+
+        async function analyzeFile() {
+            const fileInput = document.getElementById('fileInput');
+
+            if (!fileInput.files.length) {
+                showError('Please select a file');
+                return;
+            }
+
+            showLoading();
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/api/analyze-file', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    showError(error.error || 'Error analyzing file');
+                    return;
+                }
+
+                const data = await response.json();
+                document.getElementById('textInput').value = data.data.cleaned_text || "Batch Analysis (View below)";
+                displayResults(data.data, data);
+            } catch (error) {
+                showError('Connection error. Make sure the backend server is running.');
+                console.error('Error:', error);
+            }
+        }
+
+        function displayResults(data, responseMeta) {
+            // Ensure results sections are visible
+            document.querySelectorAll('.results-section').forEach(el => el.classList.remove('hidden'));
+
+            // Handle Batch Results (Multi-paragraph files)
+            if (responseMeta && responseMeta.is_batch) {
+                const batchHeader = document.getElementById('batchSummaryHeader');
+                const batchList = document.getElementById('batchList');
+                const statText = document.getElementById('batchStatText');
+
+                batchHeader.style.display = 'block';
+                statText.textContent = `Found ${responseMeta.data.length} paragraphs. Select one below:`;
+
+                // Calculate Summary Stats
+                let summary = { total: responseMeta.data.length, pos: 0, neg: 0, neu: 0 };
+
+                batchList.innerHTML = responseMeta.data.map((item, index) => {
+                    const sent = item.analysis.overall_sentiment;
+                    summary[sent === 'positive' ? 'pos' : sent === 'negative' ? 'neg' : 'neu']++;
+
+                    return `
+                    <div class="batch-item" onclick="viewBatchItem(${index})" style="padding: 8px; border-radius: 5px; cursor: pointer; margin-bottom: 5px; border-left: 4px solid ${getSentimentColor(sent)}; background: #f9f9f9; font-size: 0.8rem;">
+                        <strong>Topic ${index + 1}:</strong> ${item.text_preview}
+                    </div>
+                `}).join('');
+
+                showSuccess('File analyzed successfully!', summary);
+
+                // Store batch data globally to allow switching
+                window.currentBatchData = responseMeta.data;
+                // Display first item by default
+                viewBatchItem(0);
+                return;
+            }
+
+            // Standard Single Result Display
+            document.getElementById('batchSummaryHeader').style.display = 'none';
+            renderAnalysisUI(data);
+            showSuccess('Analysis complete!');
+        }
+
+        function getSentimentColor(sentiment) {
+            if (sentiment === 'positive') return '#84fab0';
+            if (sentiment === 'negative') return '#fa709a';
+            return '#a8edea';
+        }
+
+        function viewBatchItem(index) {
+            const items = document.querySelectorAll('.batch-item');
+            items.forEach(el => el.style.background = '#f9f9f9');
+            items[index].style.background = '#eef2ff';
+
+            document.getElementById('resultTitle').textContent = `📊 Topic ${index + 1} Analysis`;
+            renderAnalysisUI(window.currentBatchData[index].analysis);
+        }
+
+        function renderAnalysisUI(data) {
+            // Update sentiment display
+            const sentiment = data.overall_sentiment.toUpperCase();
+            const sentimentDisplay = document.getElementById('sentimentDisplay');
+            sentimentDisplay.className = `sentiment-display sentiment-${data.overall_sentiment}`;
+            document.getElementById('sentimentLabel').textContent = sentiment;
+
+            // Update confidence
+            const confidence = Math.round(data.confidence * 100);
+            document.getElementById('confidenceFill').style.width = confidence + '%';
+            document.getElementById('confidencePercent').textContent = confidence + '%';
+
+            // Update stats
+            document.getElementById('overallSentiment').textContent = sentiment;
+            document.getElementById('confidenceScore').textContent = data.confidence.toFixed(3);
+            document.getElementById('sentenceCount').textContent = data.sentence_count;
+            document.getElementById('tokenCount').textContent = data.token_count;
+
+            // Update detailed scores
+            document.getElementById('positiveScore').textContent = data.vader_scores.positive;
+            document.getElementById('negativeScore').textContent = data.vader_scores.negative;
+            document.getElementById('neutralScore').textContent = data.vader_scores.neutral;
+            document.getElementById('compoundScore').textContent = data.vader_scores.compound;
+            document.getElementById('polarity').textContent = data.textblob_scores.polarity;
+            document.getElementById('subjectivity').textContent = data.textblob_scores.subjectivity;
+
+            // Update chart
+            updateChart(data.overall_sentiment, data.confidence);
+
+            // Update tokens
+            updateTokensList(data.processed_tokens);
+
+            // Update sentence analysis
+            updateSentenceAnalysis(data.sentence_analysis);
+        }
+
+        function updateChart(sentiment, confidence) {
+            const ctx = document.getElementById('sentimentChart').getContext('2d');
+
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            // Calculate sentiment distribution based on overall sentiment and confidence
+            let positiveScore, negativeScore, neutralScore;
+
+            if (sentiment === 'positive') {
+                positiveScore = confidence;
+                negativeScore = (1 - confidence) * 0.3;
+                neutralScore = (1 - confidence) * 0.7;
+            } else if (sentiment === 'negative') {
+                negativeScore = confidence;
+                positiveScore = (1 - confidence) * 0.3;
+                neutralScore = (1 - confidence) * 0.7;
+            } else {
+                neutralScore = confidence;
+                positiveScore = (1 - confidence) * 0.5;
+                negativeScore = (1 - confidence) * 0.5;
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Positive', 'Negative', 'Neutral'],
+                    datasets: [{
+                        data: [positiveScore, negativeScore, neutralScore],
+                        backgroundColor: [
+                            '#84fab0',
+                            '#fa709a',
+                            '#a8edea'
+                        ],
+                        borderColor: [
+                            '#155724',
+                            '#721c24',
+                            '#856404'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 1,
+                            ticks: {
+                                callback: function (value) {
+                                    return (value * 100).toFixed(0) + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateTokensList(tokens) {
+            const tokensList = document.getElementById('tokensList');
+            tokensList.innerHTML = tokens.map(token =>
+                `<div class="token-badge">${token}</div>`
+            ).join('');
+        }
+
+        function updateSentenceAnalysis(sentences) {
+            const analysisDiv = document.getElementById('sentenceAnalysis');
+            analysisDiv.innerHTML = sentences.map(sent => `
+                <div class="sentence-item">
+                    <div class="sentence-text">"${sent.sentence}"</div>
+                    <span class="sentence-sentiment sentiment-${sent.sentiment}-small">
+                        ${sent.sentiment.toUpperCase()} (${(sent.confidence * 100).toFixed(0)}%)
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        function clearText() {
+            document.getElementById('textInput').value = '';
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+    </script>
+</body>
+
+</html>
