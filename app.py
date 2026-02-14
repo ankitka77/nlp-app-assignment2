@@ -29,7 +29,15 @@ analyzer = SentimentAnalyzer()
 
 
 def allowed_file(filename):
-    """Check if file extension is allowed"""
+    """
+    Check if the file extension is allowed.
+    
+    Args:
+        filename (str): The name of the file to check.
+        
+    Returns:
+        bool: True if the file has an allowed extension, False otherwise.
+    """
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
@@ -104,8 +112,17 @@ def analyze_text():
 @app.route('/api/analyze-file', methods=['POST'])
 def analyze_file():
     """
-    Analyze sentiment from uploaded file
-    Supports .txt files
+    Analyze sentiment from an uploaded file.
+    Supports .txt files.
+    
+    Features:
+    - Reads the file content.
+    - Validates file type and size.
+    - Intelligently splits content into paragraphs for batch analysis.
+    - Returns detailed analytics for the file or its batches.
+    
+    Returns:
+        JSON response containing the analysis results, filename, and batch details.
     """
     try:
         if 'file' not in request.files:
@@ -179,12 +196,19 @@ def analyze_file():
 @app.route('/api/analyze-batch', methods=['POST'])
 def analyze_batch():
     """
-    Analyze sentiment for multiple texts
+    Analyze sentiment for multiple texts provided in a batch.
     
     Request JSON:
     {
         "texts": ["text1", "text2", "text3"]
     }
+    
+    Constraints:
+    - Maximum 10 texts per batch.
+    - Texts must be non-empty strings.
+    
+    Returns:
+        JSON response with a list of analysis results for each text.
     """
     try:
         data = request.get_json()
@@ -238,7 +262,18 @@ def analyze_batch():
 @app.route('/api/stats', methods=['POST'])
 def get_stats():
     """
-    Get statistics for sentiment analysis results
+    Get statistics for sentiment analysis results.
+    
+    Computes metrics such as character count, word count, sentence count,
+    token count, and sentiment distribution.
+    
+    Request JSON:
+    {
+        "text": "Your text here"
+    }
+    
+    Returns:
+        JSON response containing the computed statistics.
     """
     try:
         data = request.get_json()

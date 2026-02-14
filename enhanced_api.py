@@ -96,7 +96,7 @@ def enhanced_app_factory(config=None):
     @limiter.limit("5 per hour")
     def register():
         """
-        Register a new API user
+        Register a new API user.
         
         Request:
         {
@@ -112,6 +112,8 @@ def enhanced_app_factory(config=None):
                 "api_key": "generated_key"
             }
         }
+        
+        Note: This is a demonstration implementation that generates a dummy API key.
         """
         try:
             data = request.get_json()
@@ -148,7 +150,7 @@ def enhanced_app_factory(config=None):
     @limiter.limit("10 per hour")
     def login():
         """
-        Login and get JWT token
+        Login and calculate access token.
         
         Request:
         {
@@ -165,6 +167,8 @@ def enhanced_app_factory(config=None):
                 "expires_in": 86400
             }
         }
+        
+        Note: This is a demonstration that accepts any valid JSON structure.
         """
         try:
             data = request.get_json()
@@ -205,7 +209,7 @@ def enhanced_app_factory(config=None):
     @limiter.limit("30 per hour")
     def analyze_sentiment_enhanced():
         """
-        Enhanced sentiment analysis with authentication and rate limiting
+        Enhanced sentiment analysis with authentication and rate limiting.
         
         Headers:
         Authorization: Bearer {jwt_token}
@@ -222,14 +226,11 @@ def enhanced_app_factory(config=None):
             "status": "success",
             "code": 200,
             "data": {
-                "request_id": "req_123",
-                "sentiment": "positive",
-                "confidence": 0.85,
-                "processed_at": "2025-01-31T10:30:00Z",
-                "analysis": {...}
-            },
-            "timestamp": "2025-01-31T10:30:00Z"
+                ...
+            }
         }
+        
+        Note: Uses mock sentiment data for demonstration if the analyzer is not connected.
         """
         try:
             data = request.get_json()
@@ -295,7 +296,7 @@ def enhanced_app_factory(config=None):
     @limiter.limit("10 per hour")
     def batch_analyze_enhanced():
         """
-        Batch sentiment analysis with job tracking
+        Batch sentiment analysis with job tracking.
         
         Request:
         {
@@ -314,6 +315,8 @@ def enhanced_app_factory(config=None):
                 "webhook_url": "..."
             }
         }
+        
+        Note: Simulates queuing a batch job without actual background processing.
         """
         try:
             data = request.get_json()
@@ -364,7 +367,7 @@ def enhanced_app_factory(config=None):
     @jwt_required()
     def get_batch_status(batch_id):
         """
-        Get status of batch processing job
+        Get status of batch processing job.
         
         Response:
         {
@@ -372,12 +375,11 @@ def enhanced_app_factory(config=None):
             "data": {
                 "batch_id": "batch_123",
                 "status": "completed",
-                "progress": 100,
-                "total_items": 2,
-                "completed_items": 2,
-                "results_url": "/api/v1/sentiment/batch/batch_123/results"
+                ...
             }
         }
+        
+        Note: Always returns a mocking 'completed' status.
         """
         try:
             # In production: Fetch job status from queue/database
@@ -405,23 +407,17 @@ def enhanced_app_factory(config=None):
     @jwt_required()
     def list_models():
         """
-        List available sentiment analysis models
+        List available sentiment analysis models.
         
         Response:
         {
             "status": "success",
             "data": {
-                "models": [
-                    {
-                        "name": "vader",
-                        "description": "VADER Sentiment Analysis",
-                        "language": "en",
-                        "accuracy": 0.88
-                    },
-                    ...
-                ]
+                "models": [...]
             }
         }
+        
+        Note: Returns a static list of models for demonstration.
         """
         models = [
             {
@@ -460,7 +456,7 @@ def enhanced_app_factory(config=None):
     @jwt_required()
     def get_model_info(model_id):
         """
-        Get detailed information about a specific model
+        Get detailed information about a specific model.
         
         Response:
         {
@@ -471,6 +467,8 @@ def enhanced_app_factory(config=None):
                 "usage_examples": [...]
             }
         }
+        
+        Note: Returns mock model information details.
         """
         # Mock model info
         model_info = {
@@ -503,7 +501,7 @@ def enhanced_app_factory(config=None):
     @jwt_required()
     def register_webhook():
         """
-        Register a webhook for event notifications
+        Register a webhook for event notifications.
         
         Request:
         {
@@ -517,12 +515,12 @@ def enhanced_app_factory(config=None):
             "status": "success",
             "data": {
                 "webhook_id": "wh_123",
-                "url": "https://your-server.com/webhook",
-                "events": [...],
-                "active": true,
-                "created_at": "..."
+                "url": "...",
+                ...
             }
         }
+        
+        Note: Simulates webhook registration (no database used).
         """
         try:
             data = request.get_json()
